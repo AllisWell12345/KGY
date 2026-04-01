@@ -10,20 +10,30 @@ import { useState, useEffect } from 'react'
 
 function App() {
 
-    const [test] = useState(() => prompt("문자열을 입력해주세요"));
-
+    const [test, setTest] = useState("");
     const [answer, setAnswer] = useState("")
+    const [startTime, setStartTime] = useState(Date.now());
 
-    const startTime = useRef(Date.now());
+    const resetGame = () => {
+        const data = prompt("문자열을 입력해주세요");
+        
+        setTest(data);
+        setAnswer("");
+        setStartTime(Date.now());
+    }
+
+    useEffect(() => {
+        resetGame();
+    },[]);
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             if (test === answer) {
-                
-                const endTime = Date.now();
-                const totalSeconds = ((endTime - startTime.current) / 1000);
+                alert((Date.now() - startTime));
 
-                alert(`${totalSeconds}초`);
+                setTimeout(() => {
+                    resetGame();
+                }, 100);
             }
         }
     }
