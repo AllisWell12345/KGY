@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 function Itemselect() {
 
-    const [selectFruit, setSelectFruit] = useState()
+    const [selectFruit, setSelectFruit] = useState("")
 
     return (
         <>
@@ -18,7 +18,7 @@ function Itemselect() {
             <>선택된 과일: {selectFruit}</>
             <br />
             <span>
-                🎉 {selectFruit}를 선택하셨습니다!
+                {selectFruit.length > 0 ? `🎉 ${selectFruit}를 선택하셨습니다!` : ""}
             </span>
         </>
     )

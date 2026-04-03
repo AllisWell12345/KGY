@@ -13,9 +13,9 @@ function Todo() {
         setLists([
             ...lists,
             {
-                id: Date.now(), // 고유한 ID값으로 현재 시간을 사용합니다.
-                text: todo,     // 할 일 내용
-                isDone: false   // 완료 여부 (처음엔 당연히 안 했으니 false!)
+                id: Date.now(),
+                text: todo,     
+                isDone: false   
             }
         ])
 
@@ -24,7 +24,6 @@ function Todo() {
 
     const toggleTodo = (id) => {
         const newList = lists.map((item) =>
-            // id가 같으면 isDone만 뒤집은 새 객체를 만들고, 다르면 원래 객체 그대로 둔다!
             item.id === id ? { 
                 ...item, isDone: !item.isDone 
             } : item
@@ -65,7 +64,6 @@ function Todo() {
                                 onChange = {() => toggleTodo(list.id)}/>
                             <span style={{ 
                                 textDecoration: list.isDone ? 'line-through' : 'none',
-                                color:'#000',
                                 marginLeft: '5px'
                             }}>{list.text}</span>
                         </label>
