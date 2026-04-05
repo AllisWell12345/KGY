@@ -1,0 +1,154 @@
+[React] useState로 상태 관리 제대로 이해하기
+
+React를 공부하면서 가장 먼저 접하게 되는 Hook인 useState에 대해 정리해보았다.
+이번 글에서는 단순 개념뿐만 아니라, 실제 코드 예제를 통해 어떻게 활용되는지까지 살펴본다.
+
+0. useState란?
+useState는 함수형 컴포넌트에서 상태(State)를 관리하기 위한 Hook이다.
+상태가 변경되면 해당 컴포넌트는 자동으로 다시 렌더링된다.
+
+👉 즉, "값이 바뀌면 화면도 함께 바뀐다"는 것이 핵심이다.
+
+
+
+📌 왜 사용할까?
+사용자 입력값을 저장하기 위해
+체크 여부, 선택 값 등 UI 상태를 관리하기 위해
+데이터 변화에 따라 화면을 자동으로 업데이트하기 위해
+
+
+📌 기본 사용법
+const [state, setState] = useState(초기값);
+state → 현재 상태 값
+setState → 상태를 변경하는 함수
+
+
+1. 입력값 관리 (input)
+const [message, setMessage] = useState(''); 
+
+const handleInputChange = (e) => { 
+	setMessage(e.target.value); 
+};
+
+
+input 태그와 state를 연결하면 입력값을 실시간으로 관리할 수 있다.
+
+
+
+👉 핵심 포인트
+
+value로 state 연결
+onChange로 값 변경
+입력한 값이 바로 화면에 반영되는 것을 확인할 수 있다.
+
+
+
+2. 체크박스 ☑️ 상태 관리
+const [isChecked, setIsChecked] = useState(false); 
+
+<input 
+	type="checkbox" 
+	checked={isChecked} 
+	onChange={(e) => setIsChecked(e.target.checked)} 
+/>
+
+
+select 태그 역시 value와 onChange를 통해 상태를 관리할 수 있다.
+
+
+
+👉 사용자가 선택한 값이 state에 저장된다.
+
+
+
+3. select 박스🔽 상태 관리
+
+const [selectedValue, setSelectedValue] = useState(''); 
+
+const handleSelectChange = (e) => { 
+	setSelectedValue(e.target.value); 
+};
+
+
+select 태그 역시 value와 onChange를 통해 상태를 관리할 수 있다.
+
+
+
+👉 사용자가 선택한 값이 state에 저장된다.
+
+
+
+4. 객체 상태 관리 (로그인 폼👤)
+const [user, setUser] = useState({ 
+	userId: '', 
+	userPwd: '' 
+});
+
+
+여러 개의 입력값을 하나의 state로 관리할 때는 객체를 사용한다.
+
+setUser({ 
+	...user, 
+	[e.target.name]: e.target.value 
+});
+
+👉 핵심 포인트
+
+...user → 기존 값 유지 (불변성)
+[name] → 동적으로 key 변경
+하나의 함수로 여러 input을 처리할 수 있어 매우 효율적이다.
+
+
+
+5. 배열 상태 관리
+const [animals, setAnimals] = useState([]);
+
+
+배열 상태를 업데이트할 때는 반드시 기존 값을 유지해야 한다.
+
+setAnimals([ 
+	...animals, 
+	inputValue 
+]);
+
+
+❌ 잘못된 방법
+
+animals.push(inputValue);
+
+
+👉 이유 : React는 상태를 직접 수정하면 변화를 감지하지 못한다.
+
+
+
+📌 리스트 렌더링
+animals.map((animal, index) => (
+	<li key={index}>{animal}</li>
+));
+
+
+배열 데이터를 화면에 출력할 때는 map을 사용한다.
+
+6. 주의할 점
+state를 직접 수정하면 안 된다
+객체/배열은 반드시 spread 문법 사용
+리스트 렌더링 시 key 값 필요
+
+
+7. 한 줄 정리
+useState는 컴포넌트의 상태를 관리하고, 상태 변경 시 UI를 자동으로 업데이트하는 React Hook이다.
+
+
+
+8. 마무리
+useState를 활용하면 입력값, 체크박스, 선택값뿐만 아니라
+객체와 배열까지 다양한 형태의 데이터를 관리할 수 있다.
+
+
+
+특히 불변성을 유지하면서 상태를 업데이트하는 방식은
+React를 이해하는 데 있어 매우 중요한 개념이라는 것을 알게 되었다.
+
+
+
+앞으로는 useEffect와 함께 활용하여 더 다양한 기능을 구현해보고자 한다.
