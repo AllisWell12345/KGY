@@ -1,0 +1,155 @@
+[React + Firebase] Firebase Authentication & Firestore로 게시판 구현하기
+
+React를 공부하면서 Firebase를 연동하여 인증(Authentication)과 게시글 CRUD 기능을 구현해보았다. 이번 글에서는 코드 구조와 함께 각 파일이 어떤 역할을 하는지 정리해본다.
+
+0. 프로젝트 구조 개요
+이번에 구현한 기능은 크게 두 가지다.
+
+Firebase Auth를 이용한 회원가입 / 로그인 / 로그아웃
+React 컴포넌트를 이용한 게시글 등록, 수정, 삭제, 목록/상세 보기
+파일 구성은 다음과 같다.
+
+
+
+config.js → Firebase 초기화 및 객체 export
+authService.js → 인증 관련 로직 (회원가입, 로그인, 로그아웃)
+MainPage.jsx → 메인 페이지 컴포넌트
+PostForm.jsx → 게시글 등록/수정 폼 컴포넌트
+PostItem.jsx → 게시글 아이템 컴포넌트 (목록/상세)
+1. Firebase 초기화 - config.js
+import { initializeApp } from "firebase/app";
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+
+const firebaseConfig = {
+    apiKey: "...",
+    authDomain: "...",
+    ...
+};
+
+const app = initializeApp(firebaseConfig);
+
+export const db = getFirestore(app);
+export const auth = getAuth(app);
+
+
+👉 핵심 포인트
+
+initializeApp(firebaseConfig) 로 Firebase 앱을 초기화한다
+getFirestore(app) 으로 Firestore DB 객체를 가져온다
+getAuth(app) 으로 Auth 객체를 가져온다
+두 객체를 export 하여 다른 파일에서 import해 사용한다
+2. 인증 로직 - authService.js
+📌 회원가입
+
+const signup = async (email, password) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    return user;
+}
+
+
+
+
+📌 로그인
+
+const login = async (email, password) => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+}
+
+
+📌 로그아웃
+
+const logout = async () => {
+    await signOut(auth);
+}
+
+
+👉 핵심 포인트
+
+createUserWithEmailAndPassword / signInWithEmailAndPassword / signOut 은 Firebase Auth에서 제공하는 함수다
+인증 함수 실행 시 반환되는 userCredential 객체에서 .user를 꺼내 사용자 정보에 접근할 수 있다
+auth.currentUser로 현재 로그인된 사용자 정보를 언제든지 조회할 수 있다
+로그아웃 시 logout() 호출 전에 await login() 이 완료되어야 하기 때문에 await 순서가 중요하다
+3. 게시글 폼 컴포넌트 - PostForm.jsx
+PostForm은 등록(create) 과 수정(edit) 두 가지 모드를 하나의 컴포넌트로 처리한다
+
+function PostForm({ mode, initialData }) {
+    const [formData, setFormData] = useState({
+        title: '',
+        content: ''
+    });
+    ...
+}
+
+
+📌 수정 모드일 때 기존 데이터 세팅
+
+useEffect(() => {
+    if (initialData) {
+        setFormData({
+            title: initialData.title,
+            content: initialData.content
+        });
+    }
+}, [initialData]);
+
+
+👉 useEffect를 사용해서 initialData가 들어오면 폼을 기존 값으로 초기화한다.
+
+
+
+📌 제출 처리
+
+if (mode === 'create') {
+    await createPost(formData);
+    navigate('/posts');
+} else if (mode === 'edit') {
+    await updatePost(initialData.id, formData);
+    navigate(`/posts/${initialData.id}`);
+}
+
+
+👉 핵심 포인트
+
+mode props 하나로 등록/수정을 분기 처리한다
+등록 완료 → 목록 페이지 이동, 수정 완료 → 해당 게시글 상세 페이지 이동
+제출 전 유효성 검사로 빈값 체크를 한다
+4. 게시글 아이템 컴포넌트 - PostItem.jsx
+PostItem도 목록(list) 과 상세(detail) 두 가지 모드를 처리한다.
+
+function PostItem({ post, mode }) { ... }
+
+
+📌 모드에 따른 UI 분기
+
+{post.title}
+{mode === 'list' && `(${post.createdAt.toDate().toLocaleString()})`}
+
+{mode === 'detail' && (
+    <>
+        <p>{post.content}</p>
+        <button onClick={handlePostUpdateClick}>수정</button>
+        <button onClick={handlePostDeleteClick}>삭제</button>
+    </>
+)}
+
+
+👉 핵심 포인트
+
+목록 모드: 제목 + 작성일시 표시, 클릭 시 상세 페이지 이동
+상세 모드: 내용 + 수정/삭제 버튼 표시
+createdAt.toDate().toLocaleString() → Firestore Timestamp를 읽기 좋은 날짜 형식으로 변환
+삭제 시 confirm() 으로 한 번 더 확인 후 처리
+5. 주의할 점
+await 순서를 지키지 않으면 로그아웃 전에 로그인이 완료되지 않아 오류가 발생한다
+Firestore의 createdAt 필드는 Timestamp 타입이라 바로 출력하면 안 되고 .toDate() 변환이 필요하다
+PostForm과 PostItem처럼 mode props 하나로 두 가지 역할을 처리하면 컴포넌트 재사용성이 높아진다
+6. 한 줄 정리
+Firebase Auth로 인증을 처리하고, mode props를 활용한 컴포넌트 설계로 재사용성 높은 게시판을 구현할 수 있다.
+
+
+
+7. 마무리
+이번에 Firebase Auth와 Firestore를 연동하면서 단순히 라이브러리 사용법을 익히는 것을 넘어, 컴포넌트 설계 방식에 대해서도 많이 고민하게 되었다. 특히 PostForm과 PostItem에서 mode props 하나로 등록/수정, 목록/상세를 처리하는 방식은 실무에서도 자주 쓰이는 패턴이라는 것을 알게 되었다. 앞으로는 로그인한 사용자 정보를 게시글에 연동하고, 본인 글만 수정/삭제할 수 있도록 권한 처리까지 구현해보고자 한다.
