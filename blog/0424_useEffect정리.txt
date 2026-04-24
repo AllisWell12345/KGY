@@ -1,0 +1,168 @@
+[React] useEffect 실전 활용 - Firebase 사용자 정보 조회
+
+이전 글에서는 useState를 통해 상태를 관리하는 방법을 정리했다.
+이번에는 실제 프로젝트 코드에서 사용한 useEffect 활용 사례를 정리해보았다.
+
+특히 Firebase를 이용해 사용자 정보를 가져오는 과정을 중심으로 살펴본다.
+
+0. useEffect란?
+useEffect는 컴포넌트 렌더링 이후 실행되는 Hook으로,
+주로 데이터 조회(API 호출)나 외부 작업을 처리할 때 사용한다.
+
+
+
+📌 왜 사용할까?
+API 호출 (데이터 가져오기)
+특정 값이 변경될 때 실행
+컴포넌트 마운트/언마운트 시 작업 처리
+
+
+📌 기본 사용법
+useEffect(() => {
+  // 실행할 코드
+}, [의존성]);
+첫 번째 인자 → 실행할 함수
+두 번째 인자 → 의존성 배열 (Dependency Array)
+
+
+📌 이번 코드에서의 역할
+로그인된 사용자 정보 가져오기
+Firestore에서 추가 정보 조회
+가져온 데이터를 state에 저장 후 화면 출력
+1. 전체 코드 핵심
+const [userProfile, setUserProfile] = useState({});
+
+useEffect(() => {
+	const fetchUser = async () => {
+    	const docSnapshot = await getDoc(
+	    	doc(db, "users", auth.currentUser.uid)
+   		);
+    	setUserProfile(docSnapshot.data());
+	};
+    
+    fetchUser(); 
+}, []);
+
+
+2. 코드 흐름 분석
+1️⃣ 상태 생성
+
+const [userProfile, setUserProfile] = useState({});
+Firestore에서 가져온 사용자 정보를 저장할 state
+초기값은 빈 객체
+2️⃣ useEffect 실행 시점
+
+useEffect(() => { ... }, []);
+👉 의존성 배열이 비어 있음
+→ 컴포넌트 최초 렌더링 시 1번만 실행
+
+
+
+3️⃣ 비동기 함수 정의
+
+const fetchUser = async () => { ... }
+
+
+👉 useEffect 내부에서는 직접 async 사용 불가
+→ 내부에 함수 만들어서 실행
+
+
+
+4️⃣ Firestore 데이터 조회
+
+const docSnapshot = await getDoc(
+  doc(db, "users", auth.currentUser.uid)
+);
+
+
+👉 의미
+
+"users" 컬렉션에서
+현재 로그인한 사용자의 UID로 문서 조회
+5️⃣ 상태 업데이트
+setUserProfile(docSnapshot.data());
+
+
+👉 데이터 흐름
+
+Firestore → 데이터 가져오기
+state 저장
+컴포넌트 재렌더링
+화면에 사용자 정보 출력
+📌 화면 출력 부분
+<p>이름: {userProfile.name}</p>
+<p>주소: {userProfile.address}</p>
+<p>성별: {userProfile.gender}</p>
+<p>권한: {userProfile.role}</p>
+
+
+👉 useEffect로 가져온 데이터가 UI에 반영됨
+
+📌 인증 정보 활용
+<p>이메일 : {auth.currentUser.email}</p>
+<p>UID : {auth.currentUser.uid}</p>
+
+
+👉 Firebase Auth에서 제공하는 기본 정보
+
+3. 보완하면 좋은 점 (중요 ⭐)
+1️⃣ 데이터 존재 여부 체크
+if (docSnapshot.exists()) {
+  setUserProfile(docSnapshot.data());
+}
+
+
+👉 문서가 없을 경우 대비 필요
+
+2️⃣ 로딩 상태 추가
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  const fetchUser = async () => {
+    const docSnapshot = await getDoc(doc(db, "users", auth.currentUser.uid));
+
+    if (docSnapshot.exists()) {
+      setUserProfile(docSnapshot.data());
+    }
+
+    setLoading(false);
+  };
+
+  fetchUser();
+}, []);
+
+
+👉 렌더링 전에 데이터 없는 상태 방지
+
+if (loading) return <p>로딩 중...</p>;
+3️⃣ 에러 처리
+try {
+  ...
+} catch (error) {
+  console.error(error);
+}
+
+
+👉 실무에서는 필수
+
+
+
+4. 자주 하는 실수
+useEffect에 async 직접 작성 ❌
+의존성 배열 빠뜨림 ❌
+무한 렌더링 발생 ❌
+5. 한 줄 정리
+useEffect는 컴포넌트 렌더링 이후 데이터를 가져오고,
+그 결과를 state에 반영하여 UI를 업데이트하는 핵심 Hook이다.
+
+
+
+6. 마무리
+이번 예제를 통해 useEffect가 단순한 개념이 아니라
+실제 서비스에서 데이터를 처리하는 핵심 도구라는 것을 알 수 있었다.
+
+특히 Firebase와 함께 사용하면서
+인증 정보 + 사용자 데이터를 연결하는 흐름을 이해할 수 있었다.
+
+앞으로는 useEffect를 활용해 API 통신, 로그인 상태 관리 등
+더 다양한 기능을 구현해볼 예정이다.
